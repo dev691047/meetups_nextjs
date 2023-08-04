@@ -1,40 +1,7 @@
 import Layout from "../components/layout/Layout";
 import MeetupList from "../components/meetups/MeetupList";
-
-const DUMMY_MEETUPS = [
-  {
-    id: "m1",
-    title: "A first meetup1",
-    image:
-      "https://njbmagazine.com/wp-content/uploads/2019/11/MeetingPlaces-Crystal-Springs-Outdoor-view.jpg",
-    address: "some address 5,1234 some city",
-    description: "this is first meetup",
-  },
-  {
-    id: "m2",
-    title: "A first meetup2",
-    image:
-      "https://njbmagazine.com/wp-content/uploads/2019/11/MeetingPlaces-Crystal-Springs-Outdoor-view.jpg",
-    address: "some address 5,1234 some city",
-    description: "this is first meetup",
-  },
-  {
-    id: "m3",
-    title: "A first meetup3",
-    image:
-      "https://njbmagazine.com/wp-content/uploads/2019/11/MeetingPlaces-Crystal-Springs-Outdoor-view.jpg",
-    address: "some address 5,1234 some city",
-    description: "this is first meetup",
-  },
-  {
-    id: "m4",
-    title: "A first meetup4",
-    image:
-      "https://njbmagazine.com/wp-content/uploads/2019/11/MeetingPlaces-Crystal-Springs-Outdoor-view.jpg",
-    address: "some address 5,1234 some city",
-    description: "this is first meetup",
-  },
-];
+import { MongoClient } from "mongodb";
+// const DUMMY_MEETUPS = [];
 
 export default function Home(props) {
   return (
@@ -44,7 +11,29 @@ export default function Home(props) {
   );
 }
 
-// we don need getserversideprops our data is  not changing frequently
+export async function getStaticProps() {
+  const client = await MongoClient.connect(
+    "mongodb+srv://kumardev:tmLyRs9b6PtPMSQj@cluster0.bwo6lqz.mongodb.net/?retryWrites=true&w=majority"
+  );
+  const db = client.db();
+  const meetupsCollection = db.collection("meetups");
+
+  const meetups = await meetupsCollection.find().toArray();
+  client.close();
+  return {
+    props: {
+      meetups: meetups.map((meetup) => ({
+        title: meetup.title,
+        address: meetup.address,
+        image: meetup.image,
+        id: meetup._id.toString(),
+      })),
+    },
+    revalidate: 1,
+  };
+}
+
+// / we don need getserversideprops our data is  not changing frequently
 // export async function getServerSideProps(context) {
 //   const req = context.req;
 //   const res = context.res;
@@ -55,12 +44,3 @@ export default function Home(props) {
 //     },
 //   };
 // }
-
-export async function getStaticProps() {
-  return {
-    props: {
-      meetups: DUMMY_MEETUPS,
-    },
-    revalidate: 10,
-  };
-}
